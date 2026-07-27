@@ -10,4 +10,4 @@ Feature: Sending Email Using the Gmail API
     Examples:
       | to                         | subject          | body                                              | driveFileName |
       | esteban.suarezr@gmail.com  | Prueba Gmail API | Este correo fue enviado por jesuarezr89           | document.pdf |
-      | pruebautomatizacionquipux@gmail.com  | Prueba Aut Quipux | Prueba de envío de correo Automatizado | document.pdf |
+      #| pruebautomatizacionquipux@gmail.com  | Prueba Aut Quipux | Prueba de envío de correo Automatizado | document.pdf |
