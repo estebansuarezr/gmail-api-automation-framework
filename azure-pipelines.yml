@@ -8,33 +8,54 @@ pool:
 
 steps:
 
-- checkout: self
+  - checkout: self
 
-# Instalar Java
-- task: JavaToolInstaller@0
-  displayName: 'Install Java 17'
-  inputs:
-    versionSpec: '17'
-    jdkArchitectureOption: 'x64'
-    jdkSourceOption: 'PreInstalled'
+  # Instalar Java 17
+  - task: JavaToolInstaller@0
+    displayName: 'Install Java 17'
+    inputs:
+      versionSpec: '17'
+      jdkArchitectureOption: 'x64'
+      jdkSourceOption: 'PreInstalled'
 
-# Descargar credentials.json desde Secure Files
-- task: DownloadSecureFile@1
-  name: googleCredentials
-  displayName: 'Download Google Credentials'
-  inputs:
-    secureFile: 'credentials.json'
+  # Descargar credentials.json desde Secure Files (Google OAuth 2.0 / APIs)
+  - task: DownloadSecureFile@1
+    name: googleCredentials
+    displayName: 'Download Google Credentials'
+    inputs:
+      secureFile: 'credentials.json'
 
-# Copiar el archivo al proyecto
-- script: |
-    mkdir -p src/test/resources
-    cp "$(googleCredentials.secureFilePath)" src/test/resources/credentials.json
-  displayName: 'Copy credentials.json'
+  # Copiar las credenciales al directorio de recursos
+  - script: |
+      mkdir -p src/test/resources
+      cp "$(googleCredentials.secureFilePath)" src/test/resources/credentials.json
+    displayName: 'Copy credentials.json to resources'
 
-# Dar permisos a Gradle
-- script: chmod +x gradlew
-  displayName: 'Grant execute permission'
+  # Dar permisos de ejecución al wrapper de Gradle
+  - script: chmod +x gradlew
+    displayName: 'Grant execute permission to Gradlew'
 
-# Compilar (sin ejecutar pruebas)
-- script: ./gradlew clean assemble
-  displayName: 'Compile Project'
+  # Compilar el proyecto
+  - script: ./gradlew clean assemble
+    displayName: 'Compile Project'
+
+  # Ejecutar las pruebas de Serenity BDD con JUnit 5 y generar el reporte
+  - script: ./gradlew test aggregate
+    displayName: 'Run Serenity Tests & Aggregate Report'
+    continueOnError: true # Permite que el pipeline siga para publicar los reportes aunque falle una prueba
+
+  # Publicar el reporte interactivo en HTML de Serenity en Azure DevOps
+  - task: PublishHtmlReport@1
+    displayName: 'Publish Serenity HTML Report'
+    condition: always()
+    inputs:
+      reportDir: 'target/site/serenity'
+      tabName: 'Serenity BDD Report'
+
+  # Publicar el resumen de JUnit en la pestaña nativa "Tests" de Azure DevOps
+  - task: PublishTestResults@2
+    displayName: 'Publish JUnit Test Results'
+    condition: always()
+    inputs:
+      testResultsFormat: 'JUnit'
+      testResultsFiles: '**/build/test-results/test/TEST-*.xml'
