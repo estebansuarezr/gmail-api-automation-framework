@@ -1,0 +1,27 @@
+# Gradle
+.gradle/
+build/
+
+# IntelliJ
+.idea/
+*.iml
+out/
+
+# Java
+*.class
+
+# Serenity
+target/
+reports/
+
+# Google OAuth
+tokens/
+
+# Credentials
+credentials.json
+
+# Logs
+*.log
+
+# Mac
+.DS_Store
