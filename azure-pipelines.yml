@@ -1,0 +1,40 @@
+trigger:
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+
+- checkout: self
+
+# Instalar Java
+- task: JavaToolInstaller@0
+  displayName: 'Install Java 17'
+  inputs:
+    versionSpec: '17'
+    jdkArchitectureOption: 'x64'
+    jdkSourceOption: 'PreInstalled'
+
+# Descargar credentials.json desde Secure Files
+- task: DownloadSecureFile@1
+  name: googleCredentials
+  displayName: 'Download Google Credentials'
+  inputs:
+    secureFile: 'credentials.json'
+
+# Copiar el archivo al proyecto
+- script: |
+    mkdir -p src/test/resources
+    cp "$(googleCredentials.secureFilePath)" src/test/resources/credentials.json
+  displayName: 'Copy credentials.json'
+
+# Dar permisos a Gradle
+- script: chmod +x gradlew
+  displayName: 'Grant execute permission'
+
+# Compilar (sin ejecutar pruebas)
+- script: ./gradlew clean assemble
+  displayName: 'Compile Project'
