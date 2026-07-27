@@ -18,7 +18,7 @@ steps:
       jdkArchitectureOption: 'x64'
       jdkSourceOption: 'PreInstalled'
 
-  # Descargar credentials.json desde Secure Files (Google OAuth 2.0 / APIs)
+  # Descargar credentials.json desde Secure Files
   - task: DownloadSecureFile@1
     name: googleCredentials
     displayName: 'Download Google Credentials'
@@ -31,7 +31,7 @@ steps:
       cp "$(googleCredentials.secureFilePath)" src/test/resources/credentials.json
     displayName: 'Copy credentials.json to resources'
 
-  # Dar permisos de ejecución al wrapper de Gradle
+  # Dar permisos de ejecución a Gradlew
   - script: chmod +x gradlew
     displayName: 'Grant execute permission to Gradlew'
 
@@ -39,20 +39,21 @@ steps:
   - script: ./gradlew clean assemble
     displayName: 'Compile Project'
 
-  # Ejecutar las pruebas de Serenity BDD con JUnit 5 y generar el reporte
+  # Ejecutar las pruebas de Serenity BDD y generar el reporte
   - script: ./gradlew test aggregate
     displayName: 'Run Serenity Tests & Aggregate Report'
-    continueOnError: true # Permite que el pipeline siga para publicar los reportes aunque falle una prueba
+    continueOnError: true # Permite continuar para publicar reportes aunque falle una prueba
 
-  # Publicar el reporte interactivo en HTML de Serenity en Azure DevOps
-  - task: PublishHtmlReport@1
-    displayName: 'Publish Serenity HTML Report'
+  # Publicar el reporte HTML de Serenity como Artifact (Tarea nativa)
+  - task: PublishPipelineArtifact@1
+    displayName: 'Publish Serenity HTML Report Artifact'
     condition: always()
     inputs:
-      reportDir: 'target/site/serenity'
-      tabName: 'Serenity BDD Report'
+      targetPath: 'target/site/serenity' # Nota: Cambia a 'build/reports/serenity' si tu proyecto lo genera ahí
+      artifact: 'SerenityReport'
+      publishLocation: 'pipeline'
 
-  # Publicar el resumen de JUnit en la pestaña nativa "Tests" de Azure DevOps
+  # Publicar el resumen de JUnit en la pestaña nativa "Tests"
   - task: PublishTestResults@2
     displayName: 'Publish JUnit Test Results'
     condition: always()
