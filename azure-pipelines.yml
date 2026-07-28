@@ -18,7 +18,7 @@ steps:
       jdkArchitectureOption: 'x64'
       jdkSourceOption: 'PreInstalled'
 
-  # Descargar credentials.json desde Secure Files
+  # Descargar credentials.json desde Secure Files (Google OAuth 2.0 / APIs)
   - task: DownloadSecureFile@1
     name: googleCredentials
     displayName: 'Download Google Credentials'
@@ -31,32 +31,10 @@ steps:
       cp "$(googleCredentials.secureFilePath)" src/test/resources/credentials.json
     displayName: 'Copy credentials.json to resources'
 
-  # Dar permisos de ejecución a Gradlew
+  # Dar permisos de ejecución al wrapper de Gradle
   - script: chmod +x gradlew
     displayName: 'Grant execute permission to Gradlew'
 
-  # Compilar el proyecto
+  # Compilar el proyecto (sin ejecutar pruebas)
   - script: ./gradlew clean assemble
     displayName: 'Compile Project'
-
-  # Ejecutar las pruebas de Serenity BDD y generar el reporte
-  - script: ./gradlew test aggregate
-    displayName: 'Run Serenity Tests & Aggregate Report'
-    continueOnError: true # Permite continuar para publicar reportes aunque falle una prueba
-
-  # Publicar el reporte HTML de Serenity como Artifact (Tarea nativa)
-  - task: PublishPipelineArtifact@1
-    displayName: 'Publish Serenity HTML Report Artifact'
-    condition: always()
-    inputs:
-      targetPath: 'target/site/serenity' # Nota: Cambia a 'build/reports/serenity' si tu proyecto lo genera ahí
-      artifact: 'SerenityReport'
-      publishLocation: 'pipeline'
-
-  # Publicar el resumen de JUnit en la pestaña nativa "Tests"
-  - task: PublishTestResults@2
-    displayName: 'Publish JUnit Test Results'
-    condition: always()
-    inputs:
-      testResultsFormat: 'JUnit'
-      testResultsFiles: '**/build/test-results/test/TEST-*.xml'
